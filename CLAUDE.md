@@ -99,6 +99,11 @@ python -m agent.main               # actually sends
 - **Turso connection errors.** The libsql client needs both
   `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. The Worker uses the HTTP API
   directly (no client lib) — different code path, same credentials.
+- **No email some mornings.** If the curator returns 0 picks, `main.py`
+  logs a warning and exits 1 — by design. A lean fresh-story day is not
+  a regression. Investigate by checking the dedup line ("X total → Y
+  fresh") and feed counts; if Y is healthy but picks are 0, look at the
+  curator prompt or profile, not the pipeline.
 
 ## Cost discipline
 
