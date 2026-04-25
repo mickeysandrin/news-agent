@@ -24,14 +24,13 @@ def _client():
 
 
 def filter_seen(stories: list[Story]) -> list[Story]:
-    """Return only stories we haven't seen before. Records the new ones as seen."""
+    """Return only stories we haven't seen before. Read-only — recording happens
+    in record_seen() after a successful send, so a failed run doesn't burn
+    stories and leave tomorrow with nothing fresh."""
     if not stories:
         return []
 
-    now = datetime.now(timezone.utc).isoformat()
-
     with _client() as db:
-        # batch the 'seen?' check
         ids = [s.id for s in stories]
         placeholders = ",".join(["?"] * len(ids))
         rs = db.execute(
@@ -40,22 +39,27 @@ def filter_seen(stories: list[Story]) -> list[Story]:
         )
         already_seen = {row[0] for row in rs.rows}
 
-        fresh = [s for s in stories if s.id not in already_seen]
-
-        # record the fresh ones so tomorrow we skip them
-        if fresh:
-            db.batch([
-                libsql_client.Statement(
-                    "INSERT OR IGNORE INTO seen_urls (url_hash, first_seen) VALUES (?, ?)",
-                    [s.id, now],
-                )
-                for s in fresh
-            ])
-
-        log.info("dedup: %d total → %d fresh (skipped %d seen)",
-                 len(stories), len(fresh), len(already_seen))
-
+    fresh = [s for s in stories if s.id not in already_seen]
+    log.info("dedup: %d total → %d fresh (skipped %d seen)",
+             len(stories), len(fresh), len(already_seen))
     return fresh
+
+
+def record_seen(stories: list[Story]) -> None:
+    """Mark stories as seen so future runs skip them. Call only after the
+    email actually went out — see filter_seen()."""
+    if not stories:
+        return
+
+    now = datetime.now(timezone.utc).isoformat()
+    with _client() as db:
+        db.batch([
+            libsql_client.Statement(
+                "INSERT OR IGNORE INTO seen_urls (url_hash, first_seen) VALUES (?, ?)",
+                [s.id, now],
+            )
+            for s in stories
+        ])
 
 
 def record_sent(stories: list[Story]) -> None:
