@@ -27,8 +27,9 @@ agent/main.py
    3. feedback.py     → build preference profile from recent votes
    4. curate.py       → LLM pass 1: pick best ~5/topic (JSON out)
    5. curate.py       → LLM pass 2: write digest in Markdown
-   6. dedup.record_sent → save sent stories so feedback can look them up
-   7. email_send.py   → Markdown → HTML → Resend
+   6. email_send.py   → Markdown → HTML → Resend
+   7. dedup.record_sent + record_seen → only after a successful send,
+                                        so a failed run doesn't burn URLs
 
 Cloudflare Worker (worker/feedback-worker.js)
    GET /vote?id=…&vote=up|down  →  insert into votes table (Turso)
@@ -132,10 +133,14 @@ monthly figure in the PR description.
 
 ## Current state / known gaps
 
-- v1 scaffold complete. First end-to-end run pending Mickey's account
-  setup (Resend, Turso, Cloudflare).
-- Some RSS URLs in `sources.yaml` are best-guesses and may need updating
-  on first run.
+- v1 live as of 2026-04-25. End-to-end send verified (Resend + Turso +
+  Cloudflare Worker all wired up).
+- Lenny's Newsletter feed returned 0 stories on the first live runs —
+  likely a stale URL in `sources.yaml`. Worth a check next time Mickey
+  is in there.
+- Other RSS URLs in `sources.yaml` were best-guesses; most fetched fine
+  on the first run, but watch for new failures and surface them rather
+  than silently working around them.
 - No Italian-language sources yet — Mickey is Italian, might want some
   (Calcio Italia, La Repubblica tech, etc.) but hasn't asked.
 - No fixture/results auto-injection for Arsenal — currently relies on
