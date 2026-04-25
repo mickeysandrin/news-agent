@@ -1,0 +1,28 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local previews
+digest_preview.html
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# Claude Code per-user state (project-shared settings.json would be tracked)
+.claude/settings.local.json
+
+# Wrangler / Cloudflare
+worker/.wrangler/
+worker/node_modules/
