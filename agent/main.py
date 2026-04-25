@@ -2,7 +2,7 @@
 
 Flow:
   fetch → dedup (skip seen) → curate (LLM pass 1) → write (LLM pass 2)
-        → record sent → send email
+        → send email → record sent + seen
 """
 from __future__ import annotations
 
@@ -84,12 +84,14 @@ def main() -> int:
         log.warning("FEEDBACK_BASE_URL not set — email will have broken vote links")
     markdown, sent_stories = curate.write_digest(picked, profile, feedback_url)
 
-    # 6. record what we sent (so the feedback worker can look up stories later)
+    # 6. send
+    email_send.send_digest(markdown, dry_run=args.dry_run)
+
+    # 7. persist post-send only: if Resend raises above, tomorrow's run gets a
+    # clean retry instead of finding everything already marked seen.
     if os.environ.get("TURSO_DATABASE_URL") and not args.dry_run:
         dedup.record_sent(sent_stories)
-
-    # 7. send
-    email_send.send_digest(markdown, dry_run=args.dry_run)
+        dedup.record_seen(sent_stories)
     return 0
 
 
