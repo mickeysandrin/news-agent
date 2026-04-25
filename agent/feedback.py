@@ -28,8 +28,10 @@ def build_preference_profile() -> str:
     that case gracefully.
     """
     try:
+        # See dedup._client() for why we force the https transport.
+        url = os.environ["TURSO_DATABASE_URL"].replace("libsql://", "https://", 1)
         with libsql_client.create_client_sync(
-            url=os.environ["TURSO_DATABASE_URL"],
+            url=url,
             auth_token=os.environ["TURSO_AUTH_TOKEN"],
         ) as db:
             cutoff = (datetime.now(timezone.utc) - timedelta(days=PROFILE_WINDOW_DAYS)).isoformat()

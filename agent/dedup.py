@@ -13,8 +13,12 @@ log = logging.getLogger(__name__)
 
 
 def _client():
+    # Force the HTTP transport (https://) instead of WebSocket (libsql://):
+    # the WS handshake hits a 505 from Turso's public endpoint on GitHub
+    # Actions runners. Same swap the Cloudflare Worker does.
+    url = os.environ["TURSO_DATABASE_URL"].replace("libsql://", "https://", 1)
     return libsql_client.create_client_sync(
-        url=os.environ["TURSO_DATABASE_URL"],
+        url=url,
         auth_token=os.environ["TURSO_AUTH_TOKEN"],
     )
 
