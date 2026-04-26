@@ -92,6 +92,7 @@ def main() -> int:
     if os.environ.get("TURSO_DATABASE_URL") and not args.dry_run:
         dedup.record_sent(sent_stories)
         dedup.record_seen(sent_stories)
+        dedup.prune_seen()
     return 0
 
 

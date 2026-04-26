@@ -1,10 +1,12 @@
 -- Turso schema for the news agent.
--- Apply with: turso db shell news-agent < schema.sql
+-- Apply with: turso db shell newsagentdb < schema.sql
 
 CREATE TABLE IF NOT EXISTS seen_urls (
   url_hash TEXT PRIMARY KEY,
   first_seen TEXT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_seen_urls_first_seen ON seen_urls(first_seen);
 
 CREATE TABLE IF NOT EXISTS votes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
