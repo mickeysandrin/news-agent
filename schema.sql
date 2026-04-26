@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS seen_urls (
   first_seen TEXT NOT NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_seen_urls_first_seen ON seen_urls(first_seen);
+
 CREATE TABLE IF NOT EXISTS votes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   story_id TEXT NOT NULL,
