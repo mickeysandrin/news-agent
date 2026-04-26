@@ -1,5 +1,5 @@
 -- Turso schema for the news agent.
--- Apply with: turso db shell news-agent < schema.sql
+-- Apply with: turso db shell newsagentdb < schema.sql
 
 CREATE TABLE IF NOT EXISTS seen_urls (
   url_hash TEXT PRIMARY KEY,
