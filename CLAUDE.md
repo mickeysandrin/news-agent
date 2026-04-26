@@ -23,13 +23,15 @@ GitHub Actions (cron, daily)
         ▼
 agent/main.py
    1. fetch.py        → RSS + HN Algolia → list[Story]
-   2. dedup.py        → skip URLs seen in last 14 days (Turso)
+   2. dedup.py        → skip URLs sent in last 7 days (Turso, windowed)
    3. feedback.py     → build preference profile from recent votes
    4. curate.py       → LLM pass 1: pick best ~5/topic (JSON out)
    5. curate.py       → LLM pass 2: write digest in Markdown
    6. email_send.py   → Markdown → HTML → Resend
-   7. dedup.record_sent + record_seen → only after a successful send,
-                                        so a failed run doesn't burn URLs
+   7. dedup.record_sent + record_seen + prune_seen →
+                          only after a successful send, so a failed run
+                          doesn't burn URLs. prune_seen drops rows older
+                          than 30 days each run.
 
 Cloudflare Worker (worker/feedback-worker.js)
    GET /vote?id=…&vote=up|down  →  insert into votes table (Turso)
@@ -98,12 +100,14 @@ python -m agent.main               # actually sends
   template, verify in Gmail before merging.
 - **Turso connection errors.** The libsql client needs both
   `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. The Worker uses the HTTP API
-  directly (no client lib) — different code path, same credentials.
+  directly (no client lib) — different code path, same credentials. The DB
+  is named `newsagentdb` (not `news-agent`); use that with `turso db shell`.
 - **No email some mornings.** If the curator returns 0 picks, `main.py`
   logs a warning and exits 1 — by design. A lean fresh-story day is not
-  a regression. Investigate by checking the dedup line ("X total → Y
-  fresh") and feed counts; if Y is healthy but picks are 0, look at the
-  curator prompt or profile, not the pipeline.
+  a regression. Investigate by checking the dedup line
+  ("N total → M fresh (skipped K seen in last 7d)") and feed counts;
+  if M is healthy but picks are 0, look at the curator prompt or
+  profile, not the pipeline.
 
 ## Cost discipline
 
